@@ -17,14 +17,33 @@
 	);
 
 	let deck;
+	let gameInitialized = false;
+	
+	// Initialize the deck right away but keep it hidden
 	shuffleDeck();
-	updateDeckDisplay(); // Show initial deck state
+	updateDeckDisplay();
+	
+	// Hide the deck display initially
+	const container = document.querySelector(".tt-deck-display");
+	if (container) {
+		container.style.opacity = '0';
+		container.style.transition = 'opacity 0.5s ease-in-out';
+	}
+	
+	// Show the deck display with a fade-in after 2 seconds
+	setTimeout(() => {
+		if (container) {
+			container.style.opacity = '1';
+		}
+		gameInitialized = true;
+		console.log('TornTools: Showing tracker with fade-in effect');
+	}, 2000); // 2 second delay before showing
 
 	function initialiseHelper() {
 		addXHRListener(({ detail: { page, xhr, json } }) => {
 			if (!feature.enabled()) return;
 
-			if (page === "page") {
+			if (page === "page" && gameInitialized) {
 				const params = new URL(xhr.responseURL).searchParams;
 				const sid = params.get("sid");
 
@@ -50,21 +69,21 @@
 						case "startGame":
 							removeHelper();
 							moveStart();
-							// Reset deck display for new game
-							shuffleDeck();
+							// Don't reset deck here as it might not have been shuffled
 							break;
 						case "moneyTaken":
 							removeHelper();
-							// Game ended, reset deck for next game
-							shuffleDeck();
+							// Game ended, but don't reset deck until we see a shuffle
 							break;
 						default:
 							break;
 					}
 
-					if (json.DB.deckShuffled) {
+					if (json.DB && json.DB.deckShuffled) {
 						console.log("TornTools: Deck shuffled detected, resetting display");
 						shuffleDeck();
+						// Also update the display to show the full deck
+						updateDeckDisplay();
 					}
 				}
 			}
@@ -73,8 +92,10 @@
 
 	function executeStrategy(data) {
 		const { value: dealerValue, suit: dealerSuit } = getCardWorth(data.currentGame[0].dealerCardInfo);
+		// Remove the dealer's card from our tracked deck
 		removeCard(dealerSuit, dealerValue);
-		updateDeckDisplay();
+		// Cache dealer value first so any subsequent display uses the correct reference
+		window.currentDealerCard = dealerValue;
 
 		let higher = 0;
 		let lower = 0;
@@ -90,6 +111,9 @@
 		else if (higher > lower) outcome = "higher";
 		else outcome = "50/50";
 
+		// Cache the dealer card value so the deck display can compute inline odds
+		window.currentDealerCard = dealerValue;
+
 		const actions = document.find(".actions-wrap");
 		if (settings.pages.casino.highlowMovement) {
 			let action;
@@ -103,6 +127,10 @@
 			if (element) element.textContent = outcome;
 			else actions.appendChild(document.newElement({ type: "span", class: "tt-high-low", text: capitalizeText(outcome) }));
 		}
+
+		// Now that state is updated (dealer value cached, deck modified, and outcome decided),
+		// refresh the deck display so the inline odds match the current recommendation
+		updateDeckDisplay();
 	}
 
 	function getCardWorth({ classCode, nameShort }) {
@@ -124,8 +152,9 @@
 		const container = document.querySelector(".tt-deck-display") || document.createElement("div");
 		container.className = "tt-deck-display";
 
-		// Remove collapsed class to ensure it starts expanded
-		container.classList.remove("collapsed");
+		// Check localStorage for saved state, default to expanded (false)
+		const isCollapsed = localStorage.getItem('ttHighLowHelper_collapsed') === 'true';
+		container.classList.toggle("collapsed", isCollapsed);
 		container.style.display = "block";
 
 		if (!container.parentElement) {
@@ -144,9 +173,37 @@
 			}
 		}
 
+		// Build header label, adding a minimal inline odds/summary when possible
+		let headerLabel = "Remaining Cards";
+		if (typeof window.currentDealerCard !== "undefined") {
+			let h = 0, l = 0, e = 0;
+			for (const s in deck) {
+				for (const v of deck[s]) {
+					if (v > window.currentDealerCard) h++;
+					else if (v < window.currentDealerCard) l++;
+					else e++;
+				}
+			}
+			let rec = "50/50";
+			let conf = "Low";
+			if (h > l) {
+				rec = "Higher";
+				conf = h > l * 1.5 ? "High" : h > l * 1.2 ? "Med" : "Low";
+			} else if (l > h) {
+				rec = "Lower";
+				conf = l > h * 1.5 ? "High" : l > h * 1.2 ? "Med" : "Low";
+			}
+			const confClass = conf.toLowerCase() === "med" ? "medium" : conf.toLowerCase();
+			const equalText = e > 0 ? ` | Equal: ${e}` : '';
+			headerLabel +=
+				` <span class="tt-inline-meta">— <span class="tt-inline-reco">${rec}</span> ` +
+				`<span class="tt-inline-count">Lower: ${l} | Higher: ${h}${equalText}</span> ` +
+				`<span class="tt-inline-confidence ${confClass}">${conf} confidence</span></span>`;
+		}
+
 		let display = "<div class='tt-deck-header'>";
-		display += "<span>Remaining Cards</span>";
-		display += "<span class='tt-deck-toggle' data-action='toggle'>[−]</span>";
+		display += `<span>${headerLabel}</span>`;
+		display += `<span class='tt-deck-toggle' data-action='toggle'>${isCollapsed ? '[+]' : '[−]'}</span>`;
 		display += "</div>";
 
 		display += "<div class='tt-deck-content'>";
@@ -210,36 +267,25 @@
 		const container = document.querySelector(".tt-deck-display");
 		if (!container) {
 			console.error("TornTools: Deck display container not found");
-			// Try to find it with a more specific selector
-			const allContainers = document.querySelectorAll("*[class*='tt-deck-display']");
-			console.log("TornTools: Found containers:", allContainers);
 			return;
 		}
 
 		const toggle = container.querySelector(".tt-deck-toggle");
 		if (!toggle) {
 			console.error("TornTools: Toggle button not found");
-			// Try to find toggle buttons
-			const allToggles = document.querySelectorAll("*[class*='tt-deck-toggle']");
-			console.log("TornTools: Found toggles:", allToggles);
 			return;
 		}
 
-		console.log("TornTools: Toggling deck display, current state:", container.classList.contains("collapsed") ? "collapsed" : "expanded");
-		console.log("TornTools: Container classes:", container.className);
-		console.log("TornTools: Toggle element:", toggle);
-
-		if (container.classList.contains("collapsed")) {
-			container.classList.remove("collapsed");
-			toggle.textContent = "[−]";
-			toggle.setAttribute("aria-expanded", "true");
-			console.log("TornTools: Deck display expanded");
-		} else {
-			container.classList.add("collapsed");
-			toggle.textContent = "[+]";
-			toggle.setAttribute("aria-expanded", "false");
-			console.log("TornTools: Deck display collapsed");
-		}
+		const isCollapsed = !container.classList.contains("collapsed");
+		
+		// Update the UI
+		container.classList.toggle("collapsed", isCollapsed);
+		toggle.textContent = isCollapsed ? "[+]" : "[−]";
+		toggle.setAttribute("aria-expanded", String(!isCollapsed));
+		
+		// Save the state to localStorage
+		localStorage.setItem('ttHighLowHelper_collapsed', isCollapsed);
+		console.log("TornTools: Deck display", isCollapsed ? "collapsed" : "expanded");
 
 		// Force a style recalculation
 		container.offsetHeight;

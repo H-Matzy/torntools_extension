@@ -94,6 +94,41 @@
 	user-select: none;
 }
 
+/* Inline odds meta next to the title */
+.tt-inline-meta {
+	font-size: 12px;
+	font-weight: 600;
+	margin-left: 10px;
+	color: #cfeac1;
+	opacity: 0.95;
+}
+
+.tt-inline-reco {
+	color: #cfeac1;
+}
+
+.tt-inline-count {
+	margin-left: 6px;
+	color: #b9d7ff;
+}
+
+.tt-inline-confidence {
+	margin-left: 8px;
+	font-weight: 700;
+}
+
+.tt-inline-confidence.high {
+	color: #00e676;
+}
+
+.tt-inline-confidence.medium {
+	color: #ffa726;
+}
+
+.tt-inline-confidence.low {
+	color: #ff5252;
+}
+
 .tt-deck-toggle {
 	font-size: 14px;
 	color: #73ff09;
