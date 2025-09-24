@@ -1,3 +1,192 @@
+.tt-deck-display {
+	background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(20, 20, 20, 0.9));
+	border: 2px solid #444;
+	border-radius: 12px;
+	padding: 15px;
+	margin: 15px 0 25px 0;
+	font-family: 'Courier New', monospace;
+	font-size: 13px;
+	max-width: 800px;
+	min-width: 600px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+	position: relative;
+	transition: all 0.3s ease;
+	z-index: 100;
+}
+
+.tt-deck-display.collapsed {
+	max-height: 50px;
+	overflow: hidden;
+}
+
+.tt-deck-display.collapsed .tt-deck-content {
+	opacity: 0;
+	visibility: hidden;
+	max-height: 0;
+	padding: 0;
+	margin: 0;
+	transition: all 0.3s ease;
+}
+
+.tt-deck-display.collapsed .tt-deck-header {
+	border-bottom: none;
+	margin-bottom: 0;
+	padding-bottom: 8px;
+}
+
+/* Ensure the deck display doesn't interfere with game layout */
+.tt-deck-display {
+	box-sizing: border-box;
+	width: 100%;
+	position: relative;
+	z-index: 50;
+	margin: 20px 0;
+	clear: both;
+	display: block !important;
+}
+
+/* Fix for the overlapping div issue - ensure proper positioning */
+.highlow-main-wrap {
+	position: relative;
+}
+
+.highlow-main-wrap ~ .tt-deck-display {
+	margin: 20px 0;
+	width: 100%;
+	clear: both;
+	display: block;
+}
+
+/* Ensure no table or other elements appear under the tracker */
+.tt-deck-display + * {
+	clear: both;
+	margin-top: 20px;
+}
+
+/* Specific fix for table elements that might appear under the tracker */
+.tt-deck-display ~ table,
+.tt-deck-display ~ .table,
+.tt-deck-display ~ [class*="table"] {
+	margin-top: 30px !important;
+	clear: both !important;
+}
+
+/* Ensure any content after the deck display has proper spacing */
+.tt-deck-display + div,
+.tt-deck-display + section,
+.tt-deck-display + main {
+	margin-top: 25px;
+}
+
+.tt-deck-header {
+	font-size: 16px;
+	font-weight: bold;
+	text-align: center;
+	margin-bottom: 12px;
+	color: #73ff09;
+	text-shadow: 0 0 8px rgba(115, 255, 9, 0.5);
+	border-bottom: 2px solid rgba(115, 255, 9, 0.3);
+	padding-bottom: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	cursor: pointer;
+	user-select: none;
+}
+
+.tt-deck-toggle {
+	font-size: 14px;
+	color: #73ff09;
+	opacity: 1;
+	transition: all 0.2s ease;
+	padding: 4px 8px;
+	border-radius: 4px;
+	background: rgba(115, 255, 9, 0.15);
+	border: 1px solid rgba(115, 255, 9, 0.4);
+	cursor: pointer;
+	min-width: 24px;
+	text-align: center;
+	font-weight: bold;
+}
+
+.tt-deck-toggle:hover {
+	background: rgba(115, 255, 9, 0.25);
+	transform: scale(1.05);
+}
+
+.tt-deck-toggle:active {
+	transform: scale(0.95);
+}
+
+.tt-deck-content {
+	transition: opacity 0.3s ease;
+}
+
+.tt-suits-container {
+	display: flex;
+	gap: 15px;
+	justify-content: space-around;
+	flex-wrap: wrap;
+}
+
+.tt-suit-group {
+	margin: 8px 0;
+	padding: 8px;
+	border: 1px solid rgba(255, 255, 255, 0.15);
+	border-radius: 6px;
+	background: rgba(255, 255, 255, 0.05);
+	min-width: 140px;
+	flex: 1;
+}
+
+.tt-suit-header {
+	font-weight: bold;
+	margin-bottom: 6px;
+	font-size: 14px;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	justify-content: center;
+}
+
+.tt-card-list {
+	line-height: 1.6;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 2px;
+	justify-content: center;
+}
+
+.tt-card {
+	display: inline-block;
+	background: rgba(255, 255, 255, 0.15);
+	padding: 3px 6px;
+	margin: 1px;
+	border-radius: 4px;
+	min-width: 18px;
+	text-align: center;
+	font-size: 12px;
+	font-weight: bold;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	transition: all 0.2s ease;
+}
+
+.tt-card:hover {
+	background: rgba(255, 255, 255, 0.25);
+	transform: translateY(-1px);
+}
+
+.tt-deck-summary {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 2px solid rgba(115, 255, 9, 0.3);
+	text-align: center;
+	font-weight: bold;
+	font-size: 14px;
+	color: #73ff09;
+	text-shadow: 0 0 6px rgba(115, 255, 9, 0.4);
+}
+
 .tt-high-low {
 	display: block;
 	width: 100%;
